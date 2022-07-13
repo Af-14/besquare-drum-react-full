@@ -3,22 +3,18 @@ import "./sequence-container.css";
 import { observer } from "mobx-react-lite";
 import { useStores } from "../../stores";
 
-type SequenceContainerProps = {
-  target_keys: string[];
-};
-
-const SequenceContainer = ({ target_keys }: SequenceContainerProps) => {
+const SequenceContainer = () => {
   const { main_store } = useStores();
 
-  const previous_target_keys = target_keys.slice(
+  const previous_target_keys = main_store.target_keys.slice(
     Math.max(main_store.current_index - 3, 0),
     main_store.current_index
   );
 
-  const current_target_key = target_keys[main_store.current_index];
-  const next_target_keys = target_keys.slice(
+  const current_target_key = main_store.target_keys[main_store.current_index];
+  const next_target_keys = main_store.target_keys.slice(
     main_store.current_index + 1,
-    Math.min(main_store.current_index + 4, target_keys.length)
+    Math.min(main_store.current_index + 4, main_store.target_keys.length)
   );
 
   while (previous_target_keys.length < 3) {

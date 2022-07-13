@@ -8,17 +8,6 @@ import { observer } from "mobx-react-lite";
 import { playSound } from "../../Helpers/sounds";
 import { useStores } from "../../stores";
 
-const generateTestBeat = () => {
-  const test_keys = ["a", "s", "d", "f", "g"];
-  const generated_array = [];
-  for (let index = 0; index < 10; index++) {
-    generated_array.push(...test_keys);
-  }
-  return generated_array;
-};
-
-const target_keys: string[] = generateTestBeat();
-
 type RecordItem = {
   key: string;
   time: number;
@@ -28,8 +17,16 @@ const MainContainer = () => {
   const { app_store, main_store } = useStores();
 
   React.useEffect(() => {
+    main_store.generateTestBeat();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
     main_store.setCurrentIndex(0);
     main_store.setScore(0);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [app_store.has_game_started]);
 
   React.useEffect(() => {
@@ -37,6 +34,7 @@ const MainContainer = () => {
       main_store.setRecordArray([]);
       main_store.setStartTime(Date.now());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [app_store.is_recording]);
 
   React.useEffect(() => {
@@ -50,6 +48,7 @@ const MainContainer = () => {
 
       Promise.all(promises).then(() => app_store.setIsPlayingBack(false));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [app_store.is_playing_back, main_store.recordArray]);
 
   const playRecordedItem = (record_item: RecordItem) => {
@@ -64,41 +63,13 @@ const MainContainer = () => {
     });
   };
 
-  const onKeyPress = (pressed_key: string) => {
-    main_store.setActiveKey(pressed_key);
 
-    if (!app_store.has_game_started && !app_store.is_recording) return;
-
-    if (app_store.is_recording) {
-      main_store.setRecordArray([
-        ...main_store.recordArray,
-        { key: pressed_key, time: Date.now() - main_store.startTime },
-      ]);
-    } else {
-      if (main_store.current_index + 1 <= target_keys.length) {
-        if (pressed_key === target_keys[main_store.current_index]) {
-          main_store.setScore(main_store.score + 1);
-          main_store.setCurrentIndex(main_store.current_index + 1);
-        } else {
-          main_store.setScore(main_store.score - 1);
-        }
-      }
-
-      if (main_store.current_index + 1 >= target_keys.length) {
-        alert("Game is complete!");
-      }
-    }
-  };
 
   return (
     <div className="main-container">
       <ScoreContainer />
-      <SequenceContainer target_keys={target_keys} />
-      <TargetContainer
-        active_key={main_store.active_key}
-        setActiveKey={main_store.setActiveKey}
-        onKeyPress={onKeyPress}
-      />
+      <SequenceContainer  />
+      <TargetContainer  />
     </div>
   );
 };

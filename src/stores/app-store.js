@@ -10,8 +10,8 @@ export default class AppStore {
   @observable is_recording = false;
 
   @action.bound
-  setStarted(has_game_started) {
-    this.has_game_started = has_game_started;
+  setStarted(has_started) {
+    this.has_game_started = has_started;
   }
 
   @action.bound
