@@ -1,9 +1,12 @@
+import "./main-container.css";
+
 import React from "react";
-import { playSound } from "../../Helpers/sounds";
 import ScoreContainer from "../ScoreContainer";
 import SequenceContainer from "../SequenceContainer";
 import TargetContainer from "../TargetContainer";
-import "./main-container.css";
+import { observer } from "mobx-react-lite";
+import { playSound } from "../../Helpers/sounds";
+import { useStores } from "../../stores";
 
 const generateTestBeat = () => {
   const test_keys = ["a", "s", "d", "f", "g"];
@@ -21,56 +24,40 @@ type RecordItem = {
   time: number;
 };
 
-type MainContainerProps = {
-  is_recording: boolean;
-  is_playing_back: boolean;
-  has_game_started: boolean;
-  stopPlayback: () => void;
-};
-
-const MainContainer = ({
-  is_recording,
-  is_playing_back,
-  has_game_started,
-  stopPlayback,
-}: MainContainerProps) => {
-  const [current_index, setCurrentIndex] = React.useState(0);
-  const [score, setScore] = React.useState(0);
-  const [recordArray, setRecordArray] = React.useState<RecordItem[]>([]);
-  const [startTime, setStartTime] = React.useState<number>(0);
-  const [active_key, setActiveKey] = React.useState<string>();
+const MainContainer = () => {
+  const { app_store, main_store } = useStores();
 
   React.useEffect(() => {
-    setCurrentIndex(0);
-    setScore(0);
-  }, [has_game_started]);
+    main_store.setCurrentIndex(0);
+    main_store.setScore(0);
+  }, [app_store.has_game_started]);
 
   React.useEffect(() => {
-    if (is_recording) {
-      setRecordArray([]);
-      setStartTime(Date.now());
+    if (app_store.is_recording) {
+      main_store.setRecordArray([]);
+      main_store.setStartTime(Date.now());
     }
-  }, [is_recording]);
+  }, [app_store.is_recording]);
 
   React.useEffect(() => {
-    if (is_playing_back) {
+    if (app_store.is_playing_back) {
       const promises: Promise<void>[] = [];
 
-      for (let i = 0; i < recordArray.length; i++) {
-        const item = recordArray[i];
+      for (let i = 0; i < main_store.recordArray.length; i++) {
+        const item = main_store.recordArray[i];
         promises.push(playRecordedItem(item));
       }
 
-      Promise.all(promises).then(stopPlayback);
+      Promise.all(promises).then(() => app_store.setIsPlayingBack(false));
     }
-  }, [is_playing_back, recordArray]);
+  }, [app_store.is_playing_back, main_store.recordArray]);
 
   const playRecordedItem = (record_item: RecordItem) => {
     return new Promise<void>((resolve) => {
       setTimeout(async () => {
-        setActiveKey(record_item.key);
+        main_store.setActiveKey(record_item.key);
         await playSound(record_item.key);
-        setActiveKey(undefined);
+        main_store.setActiveKey(undefined);
 
         resolve();
       }, record_item.time);
@@ -78,26 +65,26 @@ const MainContainer = ({
   };
 
   const onKeyPress = (pressed_key: string) => {
-    setActiveKey(pressed_key);
+    main_store.setActiveKey(pressed_key);
 
-    if (!has_game_started && !is_recording) return;
+    if (!app_store.has_game_started && !app_store.is_recording) return;
 
-    if (is_recording) {
-      setRecordArray([
-        ...recordArray,
-        { key: pressed_key, time: Date.now() - startTime },
+    if (app_store.is_recording) {
+      main_store.setRecordArray([
+        ...main_store.recordArray,
+        { key: pressed_key, time: Date.now() - main_store.startTime },
       ]);
     } else {
-      if (current_index + 1 <= target_keys.length) {
-        if (pressed_key === target_keys[current_index]) {
-          setScore(score + 1);
-          setCurrentIndex(current_index + 1);
+      if (main_store.current_index + 1 <= target_keys.length) {
+        if (pressed_key === target_keys[main_store.current_index]) {
+          main_store.setScore(main_store.score + 1);
+          main_store.setCurrentIndex(main_store.current_index + 1);
         } else {
-          setScore(score - 1);
+          main_store.setScore(main_store.score - 1);
         }
       }
 
-      if (current_index + 1 >= target_keys.length) {
+      if (main_store.current_index + 1 >= target_keys.length) {
         alert("Game is complete!");
       }
     }
@@ -105,18 +92,15 @@ const MainContainer = ({
 
   return (
     <div className="main-container">
-      <ScoreContainer score={score} />
-      <SequenceContainer
-        current_index={current_index}
-        target_keys={target_keys}
-      />
+      <ScoreContainer />
+      <SequenceContainer target_keys={target_keys} />
       <TargetContainer
-        active_key={active_key}
-        setActiveKey={setActiveKey}
+        active_key={main_store.active_key}
+        setActiveKey={main_store.setActiveKey}
         onKeyPress={onKeyPress}
       />
     </div>
   );
 };
 
-export default MainContainer;
+export default observer(MainContainer);

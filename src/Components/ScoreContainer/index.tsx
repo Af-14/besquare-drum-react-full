@@ -1,18 +1,19 @@
 import "./score.css";
 
-type ScoreContainerProps = {
-  score: number;
-};
+import { observer } from "mobx-react-lite";
+import { useStores } from "../../stores";
 
-const ScoreContainer = ({ score }: ScoreContainerProps) => {
+const ScoreContainer = () => {
+  const { main_store } = useStores();
+
   return (
     <div className="score container">
       <div className="card score-card">
         <div className="score-header">Score</div>
-        <div id="score">{score}</div>
+        <div id="score">{main_store.score}</div>
       </div>
     </div>
   );
 };
 
-export default ScoreContainer;
+export default observer(ScoreContainer);
